@@ -1,0 +1,13 @@
+IP="192.168.102.181"
+EQUIPO="2"
+IDREM="1"
+
+EQUIPO_ID=$EQUIPO$IDREM
+
+SALIDA=$(/usr/src/modpoll/linux_x86-64/modpoll -m enc -t4 -a $IDREM -r 1 -c 71 -1 -o 1 $IP -p 1024)
+echo $SALIDA | grep "[(1-9)+]"
+SALIDA=$(/usr/src/modpoll/linux_x86-64/modpoll -m enc -t4 -a $IDREM -r 71 -c 57 -1 -o 1 $IP -p 1024)
+echo $SALIDA
+
+/usr/src/modpoll/linux_x86-64/modpoll -m enc -t4 -a 1 -r 1 -c 71 -1 -o 1 192.168.102.181 -p 1024
+
