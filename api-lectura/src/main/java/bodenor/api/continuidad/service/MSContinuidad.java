@@ -81,6 +81,7 @@ public class MSContinuidad {
     @Transactional
     public Continuidad postContinuidad(Continuidad continuidad) {
         System.out.println("Entra a insertar la continuidad");
+        System.out.println("Continuidad a insertar: " + continuidad.toCsv());
         manager.persist(continuidad);
         return continuidad;
     }

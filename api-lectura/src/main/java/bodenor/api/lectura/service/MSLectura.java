@@ -85,22 +85,18 @@ public class MSLectura {
         while (matcher.find()) {//Campos específicos de modelo circutorcvmC10
             if (matcher.group(2).trim().equals("49")) {
                 Double item49 = Double.parseDouble(matcher.group(6) + matcher.group(7));
-                System.out.println("Item49: " + item49);
                 lectura.setItem49(item49);
             }
             if (matcher.group(2).trim().equals("50")) {
                 Double item50 = Double.parseDouble(matcher.group(6) + matcher.group(7));
-                System.out.println("Item50: " + item50);
                 lectura.setItem50(item50);
             }
             if (matcher.group(2).trim().equals("95")) {
                 Double item95 = Double.parseDouble(matcher.group(6) + matcher.group(7));
-                System.out.println("Item95: " + item95);
                 lectura.setItem95(item95);
             }
             if (matcher.group(2).trim().equals("96")) {
                 Double item96 = Double.parseDouble(matcher.group(6) + matcher.group(7));
-                System.out.println("Item96: " + item96);
                 lectura.setItem96(item96);
             }
         }
@@ -141,50 +137,84 @@ public class MSLectura {
 
         boolean existepotencia = true;
         Double item49 = lectura.getItem49();
-        System.out.println("Item49");
+        System.out.println("Item49: " + item49);
         if (item49 == null) {
             System.out.println("Item49 nulo");
             existepotencia = false;
         }
         Double item50 = lectura.getItem50();
-        System.out.println("Item50");
+        System.out.println("Item50: " + item50);
         if (item50 == null) {
             System.out.println("Item50 nulo");
             existepotencia = false;
         }
         if (existepotencia) {//Si los items de potencia existen, se calcula la potencia con el valor de cada uno.
             potencia = lectura.getPotencia();
-        }else{
+        } else {//Si no existen, se guarda un 0.0
             potencia = 0.0D;
         }
         //Ir a obtener la lectura anterior con rest client
         //Parámetros de entrada para el MSContinuidad: (origen, timestamp, numremarcador)
         //Se excluye parámetro IP por ahora
         Continuidad anterior = continuidad.getAnterior(lectura.getOrigen(), lectura.getTimestamp(), lectura.getNumremarcador());
+        System.out.println("");
+        System.out.println("");
+        System.out.println("Continuidad Anterior encontrada: ");
+        System.out.println(anterior.toCsv());
         Continuidad newContinuidad = new Continuidad();
+        
+        System.out.println("");
+        System.out.println("");
         if (existe == 1) {
-            
-            if (anterior.getLecturareal() == null) {//No hay anterior
+            System.out.println("Se puede calcular.");
+            if (anterior.getLecturareal() == null) {//No hay anterior en BD.
+                System.out.println("No existe registro anterior en BD. Se guarda lo que viene.");
                 newContinuidad.setLecturareal(lectura.getEnergia());
-                newContinuidad.setUltimomaximo(0.0D); //UltimoMaximo a cero
-                newContinuidad.setDelta(0.0D); // Delta a cero
+                newContinuidad.setUltimomaximo(0.0D); //UltimoMaximo a cero.
+                newContinuidad.setDelta(lectura.getEnergia()); // El delta es variación. Desde anterior a actual. ([lectura actual] - [lectura anterior]).
                 newContinuidad.setLecturaproyectada(lectura.getEnergia());
-            } else if(anterior.getLecturareal() <= lectura.getEnergia()){  //Caso normal en que hay una continuidad
+            } else if (anterior.getLecturareal() <= lectura.getEnergia()) {  //Existe al menos una anterior y su lectura es menor que la nueva (Caso normal).
+                /**
+                 * Se calcula todo en base a: (consumo = lectura nueva - lectura
+                 * anterior) //Variación desde la lectura anterior a la actual.
+                 * Finalmente, ese valor (delta), se le agrega a la continuidad
+                 * (Lectura Proyectada).
+                 */
+                System.out.println("Existe una anterior, es menor que la que viene. Se calcula.");
                 newContinuidad.setLecturareal(lectura.getEnergia());
                 newContinuidad.setUltimomaximo(anterior.getLecturareal());
                 newContinuidad.setDelta(lectura.getEnergia() - anterior.getLecturareal());
                 newContinuidad.setLecturaproyectada(anterior.getLecturaproyectada() + newContinuidad.getDelta());
-            } else if(anterior.getLecturareal() > lectura.getEnergia()){ //Puede existir un reseteo acá
+            } else if (anterior.getLecturareal() > lectura.getEnergia()) { //La lectura que viene entrando es menor que la anterior. Puede existir un reseteo acá
+                /**
+                 * Se considera que cualquier caso en que la lectura que viene
+                 * entrando corresponde a un reseteo Se calcula el delta en base
+                 * a cero, es decir, el delta es la lectura que viene llegando.
+                 * [delta = (lectura nueva - 0)] Lectura Proyectada = (lectura
+                 * proyectada anterior + delta)
+                 */
+                System.out.println("Existe una anterior, es mayor que la que viene. Se calcula reseteo.");
+                newContinuidad.setDelta(lectura.getEnergia());
+                newContinuidad.setLecturaproyectada(anterior.getLecturaproyectada() + newContinuidad.getDelta());
                 newContinuidad.setLecturareal(lectura.getEnergia());
-                newContinuidad.setDelta(0.0D);
-                newContinuidad.setLecturaproyectada(anterior.getLecturaproyectada());
                 newContinuidad.setUltimomaximo(lectura.getEnergia());
             }
 
+        }else{//No se puede calcular
+            System.out.println("No se puede calcular");
+            if (anterior.getLecturareal() == null) {//No hay anterior en BD.
+                //No se puede resolver la lectura de ninguna forma porque faltan datos mínimos requeridos
+                System.out.println("No existe una anterior. No se puede guardar nada.");
+                return new Continuidad();
+            } else {
+                System.out.println("Existe una anterior. Se guarda esa, pero con Delta 0.0");
+                newContinuidad.setDelta(0.0D);
+                newContinuidad.setLecturaproyectada(anterior.getLecturaproyectada());
+                newContinuidad.setLecturareal(anterior.getLecturareal());
+                newContinuidad.setUltimomaximo(anterior.getLecturareal());
+            }
         }
-        if (existe == 0) {
-            newContinuidad = anterior;
-        }
+
 
         newContinuidad.setOrigen(lectura.getOrigen());
         newContinuidad.setTimestamp(lectura.getTimestamp());
@@ -196,6 +226,8 @@ public class MSLectura {
         newContinuidad.setPotencia(potencia);
         newContinuidad.setExiste(existe);
 
+        System.out.println("");
+        System.out.println("");
         System.out.println("###############################################################################");
         System.out.println("Contenido del mensaje:");
         System.out.println("");
