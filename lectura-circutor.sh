@@ -12,4 +12,4 @@ IDREM="IDREM[$3]"
 CONTENIDO=$(./modpoll -m enc -t4 -a $3 -r 49 -c 50 -1 -o 1 $1 -p 1024)
 
 
-curl -X POST -H "Content-Type: text/plain" -d "$TIMESTAMP$IP$EQUIPO$IDREM$CONTENIDO" http://localhost:8080/lectura/circutorcvmC10
+curl -X POST -H "Content-Type: text/plain" -d "$TIMESTAMP$IP$EQUIPO$IDREM$CONTENIDO" http://localhost:8080/api/lectura/circutorcvmC10

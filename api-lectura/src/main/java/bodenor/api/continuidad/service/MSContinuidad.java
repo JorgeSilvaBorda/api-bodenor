@@ -85,5 +85,29 @@ public class MSContinuidad {
         manager.persist(continuidad);
         return continuidad;
     }
+    
+    @Path("/diario")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Continuidad postContinuidadDiario(Continuidad continuidad) {
+        System.out.println("Entra a calcular o actualizar la continuidad diaria");
+        System.out.println("Continuidad a insertar: " + continuidad.toCsv());
+        //manager.persist(continuidad);
+        return continuidad;
+    }
+    
+    @Path("/mensual")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Transactional
+    public Continuidad postContinuidadMensual(Continuidad continuidad) {
+        System.out.println("Entra a calcular o actualizar la continuidad diaria");
+        System.out.println("Continuidad a insertar: " + continuidad.toCsv());
+        //manager.persist(continuidad);
+        return continuidad;
+    }
 
 }

@@ -20,7 +20,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
  *
  * @author Jorge Silva Borda.
  */
-@Path("/lectura")
+@Path("/api/lectura")
 public class MSLectura {
 
     @Inject
@@ -250,6 +250,9 @@ public class MSLectura {
 
         continuidad.postContinuidad(newContinuidad);
 
+        //Se debe actualizar la diaria y mensual ahora
         return newContinuidad;
     }
+    
+    
 }
