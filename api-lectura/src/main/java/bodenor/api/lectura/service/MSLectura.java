@@ -71,9 +71,21 @@ public class MSLectura {
         regexp = "(EQUIPO\\[)([0-9]{1,8})(\\]IDREM\\[)([0-9]{1,8})(\\])";
         pattern = Pattern.compile(regexp);
         matcher = pattern.matcher(contenido);
+        boolean idEncontrado = false;
         if (matcher.find()) {
             //System.out.println("NUMREMARCADOR: " + matcher.group(2) + matcher.group(4));
             lectura.setNumremarcador(Integer.parseInt(matcher.group(2) + matcher.group(4)));
+            idEncontrado = true;
+        }
+        if (!idEncontrado) {
+            //Patrón regexp sacar Id Remarcador en el conversor del mensaje
+            regexp = "(EQUIPO\\[)([0-9]{1,8})(\\])";
+            pattern = Pattern.compile(regexp);
+            matcher = pattern.matcher(contenido);
+            if (matcher.find()) {
+                //System.out.println("NUMREMARCADOR: " + matcher.group(2) + matcher.group(4));
+                lectura.setNumremarcador(Integer.parseInt(matcher.group(2)));
+            }
         }
 
         //Patrón regexp sacar campos del mensaje
@@ -162,7 +174,7 @@ public class MSLectura {
         System.out.println("Continuidad Anterior encontrada: ");
         System.out.println(anterior.toCsv());
         Continuidad newContinuidad = new Continuidad();
-        
+
         System.out.println("");
         System.out.println("");
         if (existe == 1) {
@@ -200,7 +212,7 @@ public class MSLectura {
                 newContinuidad.setUltimomaximo(lectura.getEnergia());
             }
 
-        }else{//No se puede calcular
+        } else {//No se puede calcular
             System.out.println("No se puede calcular");
             if (anterior.getLecturareal() == null) {//No hay anterior en BD.
                 //No se puede resolver la lectura de ninguna forma porque faltan datos mínimos requeridos
@@ -214,7 +226,6 @@ public class MSLectura {
                 newContinuidad.setUltimomaximo(anterior.getLecturareal());
             }
         }
-
 
         newContinuidad.setOrigen(lectura.getOrigen());
         newContinuidad.setTimestamp(lectura.getTimestamp());
@@ -253,6 +264,5 @@ public class MSLectura {
         //Se debe actualizar la diaria y mensual ahora
         return newContinuidad;
     }
-    
-    
+
 }
