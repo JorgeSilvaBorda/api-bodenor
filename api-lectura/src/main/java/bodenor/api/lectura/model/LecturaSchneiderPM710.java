@@ -12,16 +12,14 @@ package bodenor.api.lectura.model;
 public class LecturaSchneiderPM710 extends Lectura{
 
     @Override
-    public double getEnergia() {
+    public Double getEnergia() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    @Override
-    public double getPotencia() {
+    public Double getPotencia() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    @Override
     public String toCsv() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

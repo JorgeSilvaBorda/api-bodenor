@@ -1,0 +1,12 @@
+echo $LINEA | cut -d";" -f 2
+INPUT=/home/jorge/dev/api/bodenor/tabla-circutor.csv
+while IFS= read -r line
+do
+	TIMESTAMP=$(echo line | cut -d";" -f 1)
+	ANIO=$(echo line | cut -d";" -f 2)
+	MES=$(echo line | cut -d";" -f 3)
+	DIA=$(echo line | cut -d";" -f 4)
+	EQUIPO_ID=$(echo line | cut -d";" -f 1)
+	ITEM49=$(echo line | cut -d";" -f 1)
+	echo line | cut -d";" -f 1)
+	

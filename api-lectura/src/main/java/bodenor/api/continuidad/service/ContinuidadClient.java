@@ -18,7 +18,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 @RegisterRestClient(configKey = "config.api.continuidad")
 @Path("/continuidad")
-public interface ContinuidadService {
+public interface ContinuidadClient {
     
     /**
      * Obtiene la medida anterior almacenada en caso de existir

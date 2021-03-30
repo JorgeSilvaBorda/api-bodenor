@@ -2,7 +2,6 @@ package bodenor.api.lectura.service;
 
 import bodenor.api.com.Util;
 import bodenor.api.continuidad.model.Continuidad;
-import bodenor.api.continuidad.service.ContinuidadService;
 import bodenor.api.lectura.model.LecturaCircutorCVMC10;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,6 +13,9 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import bodenor.api.continuidad.service.ContinuidadClient;
+import bodenor.api.continuidadmensual.model.ContinuidadMensual;
+import bodenor.api.continuidadmensual.service.ContinuidadMensualClient;
 
 /**
  * Microservicio Lectura [MSLectura]
@@ -25,11 +27,15 @@ public class MSLectura {
 
     @Inject
     @RestClient
-    private ContinuidadService continuidad;
+    private ContinuidadClient continuidadClient;
+
+    @Inject
+    @RestClient
+    private ContinuidadMensualClient continuidadMensualClient;
 
     /**
-     * Recibe request http POST para ingresar un registro de continuidad de
-     * Lectura de Remarcador CircutorCVMC10.
+     * Recibe request http POST para ingresar un registro de continuidadClient
+     * de Lectura de Remarcador CircutorCVMC10.
      *
      * @param contenido El contenido del mensaje que viene en el request.
      * @return Continuidad
@@ -168,7 +174,7 @@ public class MSLectura {
         //Ir a obtener la lectura anterior con rest client
         //Parámetros de entrada para el MSContinuidad: (origen, timestamp, numremarcador)
         //Se excluye parámetro IP por ahora
-        Continuidad anterior = continuidad.getAnterior(lectura.getOrigen(), lectura.getTimestamp(), lectura.getNumremarcador());
+        Continuidad anterior = continuidadClient.getAnterior(lectura.getOrigen(), lectura.getTimestamp(), lectura.getNumremarcador());
         System.out.println("");
         System.out.println("");
         System.out.println("Continuidad Anterior encontrada: ");
@@ -259,9 +265,47 @@ public class MSLectura {
         System.out.println("");
         System.out.println("###############################################################################");
 
-        continuidad.postContinuidad(newContinuidad);
+        continuidadClient.postContinuidad(newContinuidad);
 
-        //Se debe actualizar la diaria y mensual ahora
+        //Se debe actualizar la mensual ahora
+        ContinuidadMensual continuidadMensual = continuidadMensualClient.getContinuidadMensual(newContinuidad.getNumremarcador(), newContinuidad.getAnio(), newContinuidad.getMes());
+        System.out.println("La continuidad mensual que viene:");
+        System.out.println(continuidadMensual.toCsv());
+
+        continuidadMensual.setNumremarcador(newContinuidad.getNumremarcador());
+        continuidadMensual.setAnio(newContinuidad.getAnio());
+        continuidadMensual.setMes(newContinuidad.getMes());
+        
+        if (continuidadMensual.getNumremarcador() == null) {//Es nueva. No existe registro de consumo mensual para el remarcador en el anio/mes enviado
+            System.out.println("Continuidad mensual es nueva");
+            //Se crea con el time y lectura inicial.
+            
+            continuidadMensual.setTimelecturaini(newContinuidad.getTimestamp());
+            continuidadMensual.setLecturaini(newContinuidad.getLecturaproyectada());
+            continuidadMensualClient.postContinuidadMensual(continuidadMensual);
+        } else {
+            if (continuidadMensual.getTimelecturaini() == null) {//Existe solo el registro, sin fechas ni valores
+                System.out.println("Continuidad mensual es nueva pero no tiene valores");
+                //Se crea con el time y lectura inicial.
+                continuidadMensual.setTimelecturaini(newContinuidad.getTimestamp());
+                continuidadMensual.setLecturaini(newContinuidad.getLecturaproyectada());
+                continuidadMensualClient.postContinuidadMensual(continuidadMensual);
+            } else if (continuidadMensual.getTimelecturaini() != null && continuidadMensual.getTimelecturafin() == null) {//Existe solo el registro de inicio de mes
+                System.out.println("Continuidad mensual no es nueva y tiene valor y fecha ini");
+                //Se actualiza. Se toma la que existe con time y lectura inicial y se le pega el time y lectura final
+                continuidadMensual.setTimelecturafin(newContinuidad.getTimestamp());
+                continuidadMensual.setLecturafin(newContinuidad.getLecturaproyectada());
+                continuidadMensual.setConsumomes(continuidadMensual.getLecturafin() - continuidadMensual.getLecturaini());
+                continuidadMensualClient.patchContinuidadMensual(continuidadMensual);
+            } else if (continuidadMensual.getTimelecturaini() != null && continuidadMensual.getTimelecturafin() != null) {//Existe tanto el inicio como el fin de mes
+                System.out.println("Continuidad mensual no es nueva y tiene todo. Se actualiza fecha fin y lectura fin");
+                //Se actualiza el time final y el consumo final
+                continuidadMensual.setTimelecturaini(newContinuidad.getTimestamp());
+                continuidadMensual.setLecturafin(newContinuidad.getLecturaproyectada());
+                continuidadMensual.setConsumomes(continuidadMensual.getLecturafin() - continuidadMensual.getLecturaini());
+                continuidadMensualClient.patchContinuidadMensual(continuidadMensual);
+            }
+        }
         return newContinuidad;
     }
 
